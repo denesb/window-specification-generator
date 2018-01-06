@@ -35,7 +35,7 @@ Generate this:
 ## Usage
 
 ```
-./wd.py /path/to/my-json-specification.json
+./wsg.py /path/to/my-json-specification.json
 ```
 
 ## Dependencies
