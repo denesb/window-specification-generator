@@ -1,5 +1,6 @@
 {
     "name": "example",
+    "title": "Example",
     "windows": [
         {
             "name": "kitchen1",
@@ -31,6 +32,18 @@
                         "type": "vertical",
                         "pieces": [{}, {"opens": "right"}]
                     },
+                    {}
+                ]
+            }
+        },
+        {
+            "name": "kitchen3",
+            "width": 200,
+            "height": 100,
+            "division": {
+                "type": "horizontal",
+                "pieces": [
+                    {},
                     {}
                 ]
             }

@@ -272,6 +272,8 @@ def draw_window(c, spec, index_on_page):
     text = spec["name"]
     text_width = c.stringWidth(text)
     c.drawString(r.width * cm * sf / 2 - text_width / 2, r.height * cm * sf + 1 * cm, text)
+    c.bookmarkPage(text)
+    c.addOutlineEntry(text, text)
 
     # Outer rectangle
     c.rect(*r.to_drawable(sf))
@@ -286,6 +288,8 @@ def draw_window(c, spec, index_on_page):
 
 def draw_windows(spec):
     c = canvas.Canvas(spec["name"] + ".pdf", pagesize=A4)
+    c.setTitle(spec["title"])
+    c.showOutline()
     for i, window in enumerate(spec["windows"]):
         if i > 1 and i % 2 == 0:
             c.showPage()
