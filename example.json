@@ -10,9 +10,13 @@
                 "pieces": [
                     {
                         "type": "horizontal",
-                        "pieces": [{}, {}]
+                        "pieces": [
+                            {}, {"opens": "left"}
+                        ]
                     },
-                    {}
+                    {
+                        "opens": ["top", "left"]
+                    }
                 ]
             }
         },
@@ -25,7 +29,7 @@
                 "pieces": [
                     {
                         "type": "vertical",
-                        "pieces": [{}, {}]
+                        "pieces": [{}, {"opens": "right"}]
                     },
                     {}
                 ]

@@ -109,14 +109,65 @@ def calculate_division_rects(spec):
                 calculate_division_rects(d)
 
 
-def draw_division(c, spec, sf):
-    t = spec.get("type", None)
-    if t is None:
-        return
+def draw_opening(c, d, opening, sf):
+    r = d["rect"]
+    x = r.top_left[0] * cm * sf
+    y = r.bottom_right[1] * cm * sf
+    w = r.width * cm * sf
+    h = r.height * cm * sf
+    xm = x + w / 2
+    ym = y - h / 2
+    pad = 0.2 * cm
+    if opening is None:
+        s = 0.5 * cm
+        c.line(xm - s, ym, xm + s, ym)
+        c.line(xm, ym - s, xm, ym + s)
+    else:
+        if opening == "top":
+            x_tip = xm
+            y_tip = y - pad
+            x_left = x + pad
+            y_left = y - h + pad
+            x_right = x + w - pad
+            y_right = y - h + pad
+        elif opening == "left":
+            x_tip = x + pad
+            y_tip = ym
+            x_left = x + w - pad
+            y_left = y - h + pad
+            x_right = x + w - pad
+            y_right = y - pad
+        elif opening == "right":
+            x_tip = x + w - pad
+            y_tip = ym
+            x_left = x + pad
+            y_left = y - h + pad
+            x_right = x + pad
+            y_right = y - pad
+        else:
+            raise Exception("Invalid opening value: `{}'".format(opening))
 
+        lines = [(x_tip, y_tip, x_left, y_left),
+                (x_left, y_left, x_right, y_right),
+                (x_right, y_right, x_tip, y_tip)]
+        c.lines(lines)
+
+def draw_division(c, spec, sf):
+    t = spec["type"]
     pieces = spec["pieces"]
     for i, d in enumerate(reversed(pieces)):
         r = d["rect"]
+
+        if "type" in d:
+            draw_division(c, d, sf)
+        else:
+            openings = d.get("opens", None)
+            if (type(openings) is list):
+                for opening in openings:
+                    draw_opening(c, d, opening, sf)
+            else:
+                draw_opening(c, d, openings, sf)
+
         if i == 0:
             continue
 
@@ -124,8 +175,6 @@ def draw_division(c, spec, sf):
             c.line(*r.right_line(sf))
         else:
             c.line(*r.bottom_line(sf))
-
-        draw_division(c, d, sf)
 
 
 def calculate_division_sizes(spec, v, h, l):
