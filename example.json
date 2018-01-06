@@ -3,7 +3,26 @@
         {
             "name": "kitchen1",
             "width": 100,
-            "height": 100
+            "height": 100,
+            "division": {
+                "type": "vertical",
+                "pieces": [
+                    {
+                        "type": "horizontal",
+                        "pieces": [{}, {}]
+                    },
+                    {}
+                ]
+            }
+        },
+        {
+            "name": "kitchen2",
+            "width": 200,
+            "height": 100,
+            "division": {
+                "type": "horizontal",
+                "pieces": [{}, {}]
+            }
         }
     ]
 }
