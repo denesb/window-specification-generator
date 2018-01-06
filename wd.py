@@ -2,18 +2,18 @@
 
 import json
 import argparse
-from PIL import Image, ImageDraw
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import cm
+from reportlab.lib.pagesizes import A4
 
-WINDOW_PADDING = (10, 10, 10, 10)
+WINDOW_PADDING = (2*cm, 2*cm, 2*cm, 2*cm)
 TOP = 0
 RIGHT = 1
 BOTTOM = 2
 LEFT = 3
-WINDOW_RECTANGLE_SIDE = 500
-WINDOW_RECTANGLE_SIZE = (WINDOW_RECTANGLE_SIDE, WINDOW_RECTANGLE_SIDE)
-WINDOW_IMAGE_SIZE = (WINDOW_RECTANGLE_SIZE[0] + WINDOW_PADDING[LEFT] + WINDOW_PADDING[RIGHT], WINDOW_RECTANGLE_SIZE[1] + WINDOW_PADDING[TOP] + WINDOW_PADDING[BOTTOM])
-WINDOW_OUTER_RECTANGLE = [(WINDOW_PADDING[LEFT], WINDOW_PADDING[TOP]), (WINDOW_PADDING[LEFT] + WINDOW_RECTANGLE_SIDE, WINDOW_PADDING[TOP] + WINDOW_RECTANGLE_SIDE)]
-WINDOW_COLOR=(0x00, 0x00, 0x00, 0xff)
+BOX = (A4[0], A4[1] / 2)
+
+WINDOW_COLOR=(0, 0, 0)
 
 
 class Rect():
@@ -32,30 +32,37 @@ class Rect():
         return self.size[1]
 
     def to_drawable(self):
-        return [self.top_left, self.bottom_right]
+        return (self.top_left[0], self.top_left[1], self.size[0], self.size[1])
 
     def bottom_line(self):
         y = self.top_left[1] + self.height
-        return [(self.top_left[0], y), (self.bottom_right[0], y)]
+        return (self.top_left[0], y, self.bottom_right[0], y)
 
     def right_line(self):
         x = self.top_left[0] + self.width
-        return [(x, self.top_left[1]), (x, self.bottom_right[1])]
+        return (x, self.top_left[1], x, self.bottom_right[1])
 
     def __repr__(self):
         return str([self.top_left, self.size])
 
 
-def scale_size(spec):
-    w = spec["width"]
-    h = spec["height"]
+def scale(spec):
+    box_w, box_h = BOX
+    w = spec["width"] * cm
+    h = spec["height"] * cm
 
-    if w < h:
-        sf = int(WINDOW_RECTANGLE_SIDE / h)
-        return (w * sf, h * sf, sf)
-    else:
-        sf = int(WINDOW_RECTANGLE_SIDE / w)
-        return (w * sf, h *sf, sf)
+    sf = min(box_h / h, box_w / w)
+    return sf, sf
+
+
+def translate(index_on_page):
+    box_w, box_h = BOX
+
+    print(index_on_page)
+    t_x = 0
+    t_y = box_h * index_on_page
+
+    return (t_x, t_y)
 
 
 def any_size_defined(pieces):
@@ -88,7 +95,7 @@ def calculate_division_rects(spec):
                 calculate_division_rects(d)
 
 
-def draw_division(draw, spec):
+def draw_division(c, spec):
     t = spec.get("type", None)
     if t is None:
         return
@@ -100,36 +107,39 @@ def draw_division(draw, spec):
             break
 
         if t == "vertical":
-            draw.line(r.bottom_line(), fill=WINDOW_COLOR)
+            c.line(*r.bottom_line())
         else:
-            draw.line(r.right_line(), fill=WINDOW_COLOR)
+            c.line(*r.right_line())
 
-        draw_division(draw, d)
+        draw_division(c, d)
 
 
-def draw_window(spec):
-    w, h = spec["width"], spec["height"]
-    wpad = WINDOW_PADDING[LEFT] + WINDOW_PADDING[RIGHT]
-    hpad = WINDOW_PADDING[TOP] + WINDOW_PADDING[BOTTOM]
+def draw_window(c, spec, index_on_page):
+    c.saveState()
 
-    image = Image.new(mode="RGBA", size=(w + wpad, h + hpad), color=(0xff, 0xff , 0xff, 0xff))
-    draw = ImageDraw.Draw(image)
+    c.translate(*translate(index_on_page))
+    c.scale(*scale(spec))
+    c.setStrokeColorRGB(*WINDOW_COLOR)
 
-    r = Rect((WINDOW_PADDING[LEFT], WINDOW_PADDING[TOP]), (w, h))
+    w, h = spec["width"] * cm, spec["height"] * cm
+    r = Rect((0, 0), (w, h))
 
     # Outer rectangle
-    draw.rectangle(r.to_drawable(), outline=WINDOW_COLOR)
+    c.rect(*r.to_drawable())
 
     spec["division"]["rect"] = r
     calculate_division_rects(spec["division"])
-    draw_division(draw, spec["division"])
+    draw_division(c, spec["division"])
 
-    image.save(spec["name"] + ".png", format="PNG")
-
+    c.restoreState()
 
 def draw_windows(spec):
-    for window in spec["windows"]:
-        draw_window(window)
+    c = canvas.Canvas(spec["name"] + ".pdf", pagesize=A4)
+    for i, window in enumerate(spec["windows"]):
+        draw_window(c, window, i % 2)
+        if i > 1 and i % 2 == 0:
+            c.showPage()
+    c.save()
 
 
 parser = argparse.ArgumentParser(
