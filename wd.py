@@ -269,6 +269,10 @@ def draw_window(c, spec, index_on_page):
 
     r = Rect((0, 0), (spec["width"], spec["height"]))
 
+    text = spec["name"]
+    text_width = c.stringWidth(text)
+    c.drawString(r.width * cm * sf / 2 - text_width / 2, r.height * cm * sf + 1 * cm, text)
+
     # Outer rectangle
     c.rect(*r.to_drawable(sf))
 
