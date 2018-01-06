@@ -6,7 +6,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
 from reportlab.lib.pagesizes import A4
 
-WINDOW_PADDING = (2*cm, 2*cm, 2*cm, 2*cm)
+BOX_PADDING = (2*cm, 5*cm, 5*cm, 2*cm)
 TOP = 0
 RIGHT = 1
 BOTTOM = 2
@@ -48,19 +48,22 @@ class Rect():
 
 def scale(spec):
     box_w, box_h = BOX
+    box_w = box_w - BOX_PADDING[LEFT] - BOX_PADDING[RIGHT]
+    box_h = box_h - BOX_PADDING[TOP] - BOX_PADDING[BOTTOM]
     w = spec["width"] * cm
     h = spec["height"] * cm
 
-    sf = min(box_h / h, box_w / w)
-    return sf, sf
+    return min(box_h / h, box_w / w)
 
 
-def translate(index_on_page):
+def translate(spec, sf, index_on_page):
     box_w, box_h = BOX
 
-    print(index_on_page)
-    t_x = 0
-    t_y = box_h * index_on_page
+    w = spec["width"] * cm * sf
+    h = spec["height"] * cm * sf
+
+    t_x = (box_w - w) / 2
+    t_y = box_h * index_on_page + (box_h - h) / 2
 
     return (t_x, t_y)
 
@@ -117,8 +120,10 @@ def draw_division(c, spec):
 def draw_window(c, spec, index_on_page):
     c.saveState()
 
-    c.translate(*translate(index_on_page))
-    c.scale(*scale(spec))
+    sf = scale(spec)
+
+    c.translate(*translate(spec, sf, index_on_page))
+    c.scale(sf, sf)
     c.setStrokeColorRGB(*WINDOW_COLOR)
 
     w, h = spec["width"] * cm, spec["height"] * cm
