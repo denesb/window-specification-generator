@@ -22,7 +22,13 @@
             "height": 100,
             "division": {
                 "type": "horizontal",
-                "pieces": [{}, {}]
+                "pieces": [
+                    {
+                        "type": "vertical",
+                        "pieces": [{}, {}]
+                    },
+                    {}
+                ]
             }
         }
     ]
