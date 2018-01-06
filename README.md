@@ -1,6 +1,6 @@
 # window-specification-generator
 
-Generate a pdf of window (physical windows, the ones that goes into you house) specification from a JSON description.
+Generate a pdf of window (physical windows, the ones that go into you house) specification from a JSON description.
 In other words given this:
 ```
 {
@@ -26,11 +26,14 @@ In other words given this:
                 ]
             }
         }
- }
+    ]
+}
  ```
 
 Generate this:
 ![screenshot-example](./screenshot-example.png)
+
+Useful if you want to ask for a price offer for a bunch of windows but don't feel like manually drawing them.
 
 ## Usage
 
