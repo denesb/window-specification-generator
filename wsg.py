@@ -138,14 +138,14 @@ def draw_opening(c, d, opening, sf):
             y_left = y - h + pad
             x_right = x + w - pad
             y_right = y - h + pad
-        elif opening == "left":
+        elif opening == "right":
             x_tip = x + pad
             y_tip = ym
             x_left = x + w - pad
             y_left = y - h + pad
             x_right = x + w - pad
             y_right = y - pad
-        elif opening == "right":
+        elif opening == "left":
             x_tip = x + w - pad
             y_tip = ym
             x_left = x + pad
@@ -160,6 +160,15 @@ def draw_opening(c, d, opening, sf):
                 (x_right, y_right, x_tip, y_tip)]
         c.lines(lines)
 
+def draw_openings(c, spec, sf):
+    openings = spec.get("opens", None)
+    if (type(openings) is list):
+        for opening in openings:
+            draw_opening(c, spec, opening, sf)
+    else:
+        draw_opening(c, spec, openings, sf)
+
+
 def draw_division(c, spec, sf):
     t = spec["type"]
     pieces = spec["pieces"]
@@ -169,12 +178,7 @@ def draw_division(c, spec, sf):
         if "type" in d:
             draw_division(c, d, sf)
         else:
-            openings = d.get("opens", None)
-            if (type(openings) is list):
-                for opening in openings:
-                    draw_opening(c, d, opening, sf)
-            else:
-                draw_opening(c, d, openings, sf)
+            draw_openings(c, d, sf)
 
         if i == len(pieces) - 1:
             continue
@@ -287,9 +291,13 @@ def draw_window(c, spec, index_on_page):
     # Outer rectangle
     c.rect(*r.to_drawable(sf))
 
-    spec["division"]["rect"] = r
-    calculate_division_rects(spec["division"])
-    draw_division(c, spec["division"], sf)
+    if "division" in spec:
+        spec["division"]["rect"] = r
+        calculate_division_rects(spec["division"])
+        draw_division(c, spec["division"], sf)
+    else:
+        spec["rect"] = r
+        draw_openings(c, spec, sf)
 
     draw_sizes(c, spec, sf)
 
