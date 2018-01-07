@@ -91,22 +91,27 @@ def calculate_division_rects(spec):
     r = spec["rect"]
     t = spec["type"]
     pieces = spec["pieces"]
+    w, h = r.size
+    n = len(pieces)
+    offset = 0
 
-    if not any_size_defined(pieces):
-        n = len(pieces)
-        for i, d in enumerate(pieces):
-            w, h = r.size
-            if t == "vertical":
-                s = w / n
-                d["rect"] = Rect((r.top_left[0] + i * s, r.top_left[1]), (s, h))
-            elif t == "horizontal":
-                s = h / n
-                d["rect"] = Rect((r.top_left[0], r.top_left[1] + i * s), (w, s))
-            else:
-                raise Exception("Invalid division type: `{}'".format(t))
+    if t == "vertical":
+        remaining = w
+        calculate_size = lambda s: Rect((r.top_left[0] + offset, r.top_left[1]), (s, h))
+    elif t == "horizontal":
+        remaining = h
+        calculate_size = lambda s: Rect((r.top_left[0], r.top_left[1] + offset), (w, s))
+    else:
+        raise Exception("Invalid division type: `{}'".format(t))
 
-            if "type" in d:
-                calculate_division_rects(d)
+    for i, d in enumerate(pieces):
+        s = d.get("size", remaining / n)
+        n = n - 1
+        remaining = remaining - s
+        d["rect"] = calculate_size(s)
+        offset = offset + s
+        if "type" in d:
+            calculate_division_rects(d)
 
 
 def draw_opening(c, d, opening, sf):

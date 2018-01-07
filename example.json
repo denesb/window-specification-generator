@@ -12,7 +12,8 @@
                     {
                         "type": "horizontal",
                         "pieces": [
-                            {}, {"opens": "left"}
+                            {"size": 30},
+                            {"opens": "left"}
                         ]
                     },
                     {
@@ -43,6 +44,19 @@
             "division": {
                 "type": "horizontal",
                 "pieces": [
+                    {"size": 70, "opens": "top"},
+                    {"size": 30}
+                ]
+            }
+        },
+        {
+            "name": "living2",
+            "width": 100,
+            "height": 200,
+            "division": {
+                "type": "horizontal",
+                "pieces": [
+                    {"size": 50},
                     {},
                     {}
                 ]
