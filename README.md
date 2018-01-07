@@ -17,7 +17,8 @@ In other words given this:
                     {
                         "type": "horizontal",
                         "pieces": [
-                            {}, {"opens": "left"}
+                            {"size": 30},
+                            {"opens": "left"}
                         ]
                     },
                     {
