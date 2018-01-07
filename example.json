@@ -31,7 +31,7 @@
                 "pieces": [
                     {
                         "type": "vertical",
-                        "pieces": [{}, {"opens": "right"}]
+                        "pieces": [{"size":  80}, {"opens": "right"}]
                     },
                     {}
                 ]
@@ -44,8 +44,8 @@
             "division": {
                 "type": "horizontal",
                 "pieces": [
-                    {"size": 70, "opens": "top"},
-                    {"size": 30}
+                    {"size": 30, "opens": "top"},
+                    {"size": 70}
                 ]
             }
         },

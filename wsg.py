@@ -19,11 +19,11 @@ WINDOW_COLOR=(0, 0, 0)
 
 
 class Rect():
-    def __init__(self, top_left, size):
-        self.top_left = top_left
+    def __init__(self, bottom_left, size):
+        self.bottom_left = bottom_left
         self.size = size
-        self.bottom_right = (self.top_left[0] + self.size[0],
-                self.top_left[1] + self.size[1])
+        self.top_right = (self.bottom_left[0] + self.size[0],
+                self.bottom_left[1] + self.size[1])
 
     @property
     def width(self):
@@ -34,27 +34,27 @@ class Rect():
         return self.size[1]
 
     def to_drawable(self, sf):
-        return (self.top_left[0] * cm * sf, #x1
-                self.top_left[1] * cm * sf, #x2
+        return (self.bottom_left[0] * cm * sf, #x1
+                self.bottom_left[1] * cm * sf, #x2
                 self.size[0] * cm * sf, #width
                 self.size[1] * cm * sf) #height
 
     def bottom_line(self, sf):
-        y = self.bottom_right[1] * cm * sf
-        return (self.top_left[0] * cm * sf,
+        y = self.bottom_left[1] * cm * sf
+        return (self.bottom_left[0] * cm * sf,
                 y,
-                self.bottom_right[0] * cm * sf,
+                self.top_right[0] * cm * sf,
                 y)
 
     def right_line(self, sf):
-        x = self.bottom_right[0] * cm * sf
+        x = self.top_right[0] * cm * sf
         return (x,
-                self.top_left[1] * cm * sf,
+                self.bottom_left[1] * cm * sf,
                 x,
-                self.bottom_right[1] * cm * sf)
+                self.top_right[1] * cm * sf)
 
     def __repr__(self):
-        return str([self.top_left, self.size])
+        return str([self.bottom_left, self.size])
 
 
 def scale(spec):
@@ -93,14 +93,17 @@ def calculate_division_rects(spec):
     pieces = spec["pieces"]
     w, h = r.size
     n = len(pieces)
-    offset = 0
 
     if t == "vertical":
+        offset = 0
         remaining = w
-        calculate_size = lambda s: Rect((r.top_left[0] + offset, r.top_left[1]), (s, h))
+        calculate_size = lambda s: Rect((r.bottom_left[0] + offset, r.bottom_left[1]), (s, h))
+        move_offset = lambda s: offset + s
     elif t == "horizontal":
+        offset = h
         remaining = h
-        calculate_size = lambda s: Rect((r.top_left[0], r.top_left[1] + offset), (w, s))
+        calculate_size = lambda s: Rect((r.bottom_left[0], r.bottom_left[1] + offset - s), (w, s))
+        move_offset = lambda s: offset - s
     else:
         raise Exception("Invalid division type: `{}'".format(t))
 
@@ -109,15 +112,15 @@ def calculate_division_rects(spec):
         n = n - 1
         remaining = remaining - s
         d["rect"] = calculate_size(s)
-        offset = offset + s
+        offset = move_offset(s)
         if "type" in d:
             calculate_division_rects(d)
 
 
 def draw_opening(c, d, opening, sf):
     r = d["rect"]
-    x = r.top_left[0] * cm * sf
-    y = r.bottom_right[1] * cm * sf
+    x = r.bottom_left[0] * cm * sf
+    y = r.top_right[1] * cm * sf
     w = r.width * cm * sf
     h = r.height * cm * sf
     xm = x + w / 2
@@ -160,7 +163,7 @@ def draw_opening(c, d, opening, sf):
 def draw_division(c, spec, sf):
     t = spec["type"]
     pieces = spec["pieces"]
-    for i, d in enumerate(reversed(pieces)):
+    for i, d in enumerate(pieces):
         r = d["rect"]
 
         if "type" in d:
@@ -173,7 +176,7 @@ def draw_division(c, spec, sf):
             else:
                 draw_opening(c, d, openings, sf)
 
-        if i == 0:
+        if i == len(pieces) - 1:
             continue
 
         if t == "vertical":
@@ -205,26 +208,6 @@ def calculate_sizes(spec):
     return h, v
 
 
-def draw_horizontal_sizes(c, spec, h, sf):
-    c.saveState()
-    c.rotate(90)
-    c.translate(0, -spec["width"] * cm * sf -1 * cm)
-    i = 0
-    for l in reversed(sorted(h.keys())):
-        c.translate(0, -i * 0.4 * cm)
-        if len(h[l]) == 0:
-            continue
-
-        i = i + 1
-        c.saveState()
-        for size in h[l]:
-            draw_size(c, size, sf)
-            c.translate(size * cm * sf, 0)
-        c.restoreState()
-
-    c.restoreState()
-
-
 def draw_size(c, size, sf):
     text = "{:.2f}".format(size)
     text_width = c.stringWidth(text)
@@ -238,18 +221,39 @@ def draw_size(c, size, sf):
     c.line(x + text_width + 0.05 * cm, INDICATOR_HEIGHT / 2, s, INDICATOR_HEIGHT / 2)
 
 
-def draw_vertical_sizes(c, v, sf):
+def draw_horizontal_sizes(c, spec, sizes, sf):
+    w, h = spec["width"], spec["height"]
     c.saveState()
-    c.translate(0, -1 * cm)
+    c.rotate(90)
+    c.translate(h * cm * sf, -w * cm * sf -1 * cm)
     i = 0
-    for l in reversed(sorted(v.keys())):
+    for l in reversed(sorted(sizes.keys())):
         c.translate(0, -i * 0.4 * cm)
-        if len(v[l]) == 0:
+        if len(sizes[l]) == 0:
             continue
 
         i = i + 1
         c.saveState()
-        for size in v[l]:
+        for size in sizes[l]:
+            c.translate(-size * cm * sf, 0)
+            draw_size(c, size, sf)
+        c.restoreState()
+
+    c.restoreState()
+
+
+def draw_vertical_sizes(c, sizes, sf):
+    c.saveState()
+    c.translate(0, -1 * cm)
+    i = 0
+    for l in reversed(sorted(sizes.keys())):
+        c.translate(0, -i * 0.4 * cm)
+        if len(sizes[l]) == 0:
+            continue
+
+        i = i + 1
+        c.saveState()
+        for size in sizes[l]:
             draw_size(c, size, sf)
             c.translate(size * cm * sf, 0)
         c.restoreState()
